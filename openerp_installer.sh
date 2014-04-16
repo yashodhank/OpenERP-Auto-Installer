@@ -197,6 +197,16 @@ EOF
         echo -e -n " | tmp.conf file location: /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf "
         echo -e -n " | wsgi.py file location: /srv/openerp/${ERP_HOSTNAME}/server/wsgi.py "
         echo -e -n " | Addons files location: /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/ "
+        echo -e -n " |  "
+        echo -e -n " |  "
+        echo -e -n " | Database Details: "
+        echo -e -n " | Database Server: localhost "
+        echo -e -n " | Database Name: ${ERP_DB_NAME} "
+        echo -e -n " | Database User: ${ERP_DB_USER} "
+        echo -e -n " | Database Pass: ${ERP_DB_PASS} "
+        echo -e -n " |  "
+        echo -e -n " |  "
+        echo -e -n " | ERP Access URL: http://${ERP_HOSTNAME} "
         echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
     }
 }
