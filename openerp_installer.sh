@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ##################################################################################
 #  Program: ./openerp_install.sh (first do chmod +x openerp_install.sh)
