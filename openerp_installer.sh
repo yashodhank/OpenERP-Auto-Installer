@@ -3,7 +3,7 @@
 ##################################################################################
 #  Program: ./openerp_install.sh (first do chmod +x openerp_install.sh)
 #  Author : Yashodhan S Kulkarni [ Securiace Technologies - www.securiace.com ]
-#  Build  : 0.0.7
+#  Build  : 0.0.8
 ##################################################################################
 
 export ERP_HOSTNAME="erp.sri-marks.com"
@@ -16,42 +16,40 @@ export OPENERP_SERVER_TYPE="server"
 function start_point() {
     function add_pg_repo ()
     {
-        echo "deb http://apt.postgresql.org/pub/repos/apt/ saucy-pgdg main" > /etc/apt/sources.list.d/pgdg.list && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        su -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ saucy-pgdg main" > /etc/apt/sources.list.d/pgdg.list && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -'
     }
     function pull_updates () {
-        apt-get update
+        su -c "apt-get update"
     }
     function install_libs_pgsql () {
-        sudo apt-get install -y python-dev build-essential python-yaml python-geoip libyaml-dev libpq-dev libev4 libev-dev libc6-dev uwsgi nginx bzr git graphviz ghostscript postgresql-client-9.3 libxml2-dev libxslt1-dev libjpeg62-dev zlib1g-dev python-virtualenv python-pip gettext libldap2-dev libsasl2-dev uwsgi-plugin-python postgresql-9.3 openssl build-essential xorg libssl-dev
+        su -c "apt-get install -y python-dev build-essential python-yaml python-geoip libyaml-dev libpq-dev libev4 libev-dev libc6-dev uwsgi nginx bzr git graphviz ghostscript postgresql-client-9.3 libxml2-dev libxslt1-dev libjpeg62-dev zlib1g-dev python-virtualenv python-pip gettext libldap2-dev libsasl2-dev uwsgi-plugin-python postgresql-9.3 openssl build-essential xorg libssl-dev"
     }
     function install_wkhtmltopdf() {
-        wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz
-        sudo tar -xJf wkhtmltox-*
-        sudo mv wkhtmltox /etc/wkhtmltox
-        sudo ln -s /etc/wkhtmltox/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
+        su -c "wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz && tar -xJf wkhtmltox-* && mv wkhtmltox /etc/wkhtmltox"
+        su -c "ln -s /etc/wkhtmltox/bin/wkhtmltopdf /usr/bin/wkhtmltopdf"
     }
     function www_config () {
-        mkdir -p /var/www
-        chown www-data:www-data /var/www -R
+        su -c "mkdir -p /var/www"
+        su -c "chown www-data:www-data /var/www -R"
     }
     function erp_user_setup () {
-        sudo adduser --system --home=/srv/openerp/${ERP_HOSTNAME} --group ${ERP_SYS_USER}
-        sudo chown ${ERP_SYS_USER} /srv/openerp/${ERP_HOSTNAME} -R
-        echo "${ERP_SYS_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
+        su -c "adduser --system --home=/srv/openerp/${ERP_HOSTNAME} --group ${ERP_SYS_USER}"
+        su -c "chown ${ERP_SYS_USER} /srv/openerp/${ERP_HOSTNAME} -R"
+        su -c 'echo "${ERP_SYS_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers'
     }
     function erp_db_setup () {
         sudo -u postgres -s createuser ${ERP_DB_USER} -P && sudo -u postgres -s createdb ${ERP_DB_NAME} -O ${ERP_DB_USER}
     }
     function erp_trunk_bazaar_checkout () {
-        sudo su - ${ERP_SYS_USER} -s /bin/bash
-        bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web
-        bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server
-        bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons
-        bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra
-        bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community
+        #sudo su - ${ERP_SYS_USER} -s /bin/bash
+        su - ${ERP_SYS_USER} -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web"
+        su - ${ERP_SYS_USER} -c "bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server"
+        su - ${ERP_SYS_USER} -c "bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons"
+        su - ${ERP_SYS_USER} -c "bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra"
+        su - ${ERP_SYS_USER} -c "bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
     }
     function erp_virtual_env_setup () {
-        cd /srv/openerp/${ERP_HOSTNAME}/
+        #cd /srv/openerp/${ERP_HOSTNAME}/
 cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
 Babel==1.3
 Cython==0.20.1
@@ -97,11 +95,13 @@ wsgiref==0.1.2
 xlwt==0.7.5
 EOF
 
-    virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env
-    /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt
+    su - ${ERP_SYS_USER} -c "virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env"
+    su - ${ERP_SYS_USER} -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
     }
     function erp_py_develop () {
-        /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python /srv/openerp/${ERP_HOSTNAME}/server/setup.py develop
+        su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python /srv/openerp/${ERP_HOSTNAME}/server/setup.py develop"
+        su -c "ln -s /srv/openerp/${ERP_HOSTNAME}/web/addons/* /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/"
+        su -c "ln -s /srv/openerp/${ERP_HOSTNAME}/addons/* /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/"
     }
     function erp_config_stuff () {
         mkdir -p /srv/openerp/${ERP_HOSTNAME}/server/config
@@ -162,7 +162,7 @@ cheaper-rss-limit-soft = 134217728
 cheaper-rss-limit-hard = 167772160
 cheaper-overload = 10
 EOF
-            sudo ln -s /srv/openerp/${ERP_HOSTNAME}/server/config/uwsgi.ini /etc/uwsgi/apps-enabled/${ERP_HOSTNAME}.ini
+            ln -s /srv/openerp/${ERP_HOSTNAME}/server/config/uwsgi.ini /etc/uwsgi/apps-enabled/${ERP_HOSTNAME}.ini
         }
         function nginx_conf () {
             cat > /srv/openerp/${ERP_HOSTNAME}/server/config/nginx.conf << EOF
@@ -179,20 +179,26 @@ uwsgi_pass unix:/srv/openerp/${ERP_HOSTNAME}/uwsgi.sock;
 }
 }
 EOF
-        sudo ln -s /srv/openerp/${ERP_HOSTNAME}/server/config/nginx.conf /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf
-        sudo sed -i 's/# server_names_hash_bucket_size 64;/server_names_hash_bucket_size 64;/g' /etc/nginx/nginx.conf
+        su -c "ln -s /srv/openerp/${ERP_HOSTNAME}/server/config/nginx.conf /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf"
+        su -c "sed -i 's/# server_names_hash_bucket_size 64;/server_names_hash_bucket_size 64;/g' /etc/nginx/nginx.conf"
         }
     }
     function www_chown_takeover () {
         chown -R www-data:www-data /srv/openerp/${ERP_HOSTNAME}
     }
     function erp_init_run () {
-        /srv/openerp/${ERP_HOSTNAME}/server/openerp-${OPENERP_SERVER_TYPE} -c /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf -d ${ERP_DB_NAME}db -u all --stop-after-init
-        #/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python 
+        su - www-data -c "/srv/openerp/${ERP_HOSTNAME}/server/openerp-${OPENERP_SERVER_TYPE} -c /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf -d ${ERP_DB_NAME}db -u all --stop-after-init"
+        #/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python
     }
-    
+    function display_final () {
+        echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
+        echo -e -n " | uwsgi.ini file location: /etc/uwsgi/apps-enabled/${ERP_HOSTNAME}.ini "
+        echo -e -n " | nginx.conf file location: /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf "
+        echo -e -n " | tmp.conf file location: /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf "
+        echo -e -n " | wsgi.py file location: /srv/openerp/${ERP_HOSTNAME}/server/wsgi.py "
+        echo -e -n " | Addons files location: /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/ "
+        echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
+    }
 }
-
-# Do something with the arguments...
 
 ## END SCRIPT
