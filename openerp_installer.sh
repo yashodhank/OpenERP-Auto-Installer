@@ -14,8 +14,7 @@ export ERP_DB_PASS="test"
 export OPENERP_SERVER_TYPE="server"
 
 function start_point() {
-    function add_pg_repo ()
-    {
+    function add_pg_repo () {
         su -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ saucy-pgdg main" > /etc/apt/sources.list.d/pgdg.list && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -'
     }
     function pull_updates () {
@@ -24,7 +23,8 @@ function start_point() {
     function install_libs_pgsql () {
         su -c "apt-get install -y python-dev build-essential python-yaml python-geoip libyaml-dev libpq-dev libev4 libev-dev libc6-dev uwsgi nginx bzr git graphviz ghostscript postgresql-client-9.3 libxml2-dev libxslt1-dev libjpeg62-dev zlib1g-dev python-virtualenv python-pip gettext libldap2-dev libsasl2-dev uwsgi-plugin-python postgresql-9.3 openssl build-essential xorg libssl-dev"
     }
-    function install_wkhtmltopdf() {
+    function install_wkhtmltopdf () {
+        su -c "unlink /usr/bin/wkhtmltopdf; rm -fr wkhtmltox*; rm -fr /etc/wkhtmltox"
         su -c "wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz && tar -xJf wkhtmltox-* && mv wkhtmltox /etc/wkhtmltox"
         su -c "ln -s /etc/wkhtmltox/bin/wkhtmltopdf /usr/bin/wkhtmltopdf"
     }
@@ -34,69 +34,38 @@ function start_point() {
     }
     function erp_user_setup () {
         su -c "adduser --system --home=/srv/openerp/${ERP_HOSTNAME} --group ${ERP_SYS_USER}"
-        su -c "chown ${ERP_SYS_USER} /srv/openerp/${ERP_HOSTNAME} -R"
+        su -c "chown ${ERP_SYS_USER}:${ERP_SYS_USER} /srv/openerp/${ERP_HOSTNAME} -R"
         su -c 'echo "${ERP_SYS_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers'
+        su -c 'echo "www-data ALL=NOPASSWD: ALL" >> /etc/sudoers'
     }
     function erp_db_setup () {
-        sudo -u postgres -s createuser ${ERP_DB_USER} -P && sudo -u postgres -s createdb ${ERP_DB_NAME} -O ${ERP_DB_USER}
+        su - postgres -c "createuser ${ERP_DB_USER} -P" && su - postgres -c "createdb ${ERP_DB_NAME} -O ${ERP_DB_USER}"
     }
     function erp_trunk_bazaar_checkout () {
         #sudo su - ${ERP_SYS_USER} -s /bin/bash
-        su - ${ERP_SYS_USER} -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web"
-        su - ${ERP_SYS_USER} -c "bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server"
-        su - ${ERP_SYS_USER} -c "bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons"
-        su - ${ERP_SYS_USER} -c "bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra"
-        su - ${ERP_SYS_USER} -c "bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
+        su - ${ERP_SYS_USER} -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web && bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server && bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons && bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra && bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
     }
     function erp_virtual_env_setup () {
         #cd /srv/openerp/${ERP_HOSTNAME}/
 cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
-Babel==1.3
-Cython==0.20.1
-Jinja2==2.7.2
-Mako==0.9.1
-MarkupSafe==0.19
-Pillow==2.4.0
-PyChart==1.39
-PyWebDAV==0.9.4
-PyYAML==3.11
-Werkzeug==0.9.4
-argparse==1.2.1
-docutils==0.11
-feedparser==5.1.3
-gdata==2.0.18
-gevent==1.0
-gevent-psycopg2==0.0.3
-greenlet==0.4.2
-lxml==3.3.4
-mock==1.0.1
-psutil==2.1.0
-psycogreen==1.0
-psycopg2==2.5.2
-pyPdf==1.13
-pydot==1.0.28
-pyparsing==1.5.7
-pyserial==2.7
-python-dateutil==1.5
-python-ldap==2.4.15
-python-openid==2.2.5
-pytz==2014.2
-pyusb==1.0.0b1
-qrcode==4.0.4
-reportlab==3.0
-requests==2.2.1
-simplejson==3.4.0
-six==1.6.1
-unittest2==0.5.1
-vatnumber==1.1
-vobject==0.8.1c
-wkhtmltopdf==0.2
-wsgiref==0.1.2
-xlwt==0.7.5
+Babel
+Cython
+Jinja2
+Mako
+MarkupSafe
+Pillow
+PyYAML
+docutils
+feedparser
+gdata
+gevent
+lxml
 EOF
 
-    su - ${ERP_SYS_USER} -c "virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env"
-    su - ${ERP_SYS_USER} -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
+    su -c "virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env"
+    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -e pypdf"
+    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
+    
     }
     function erp_py_develop () {
         su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python /srv/openerp/${ERP_HOSTNAME}/server/setup.py develop"
@@ -182,6 +151,10 @@ EOF
         su -c "ln -s /srv/openerp/${ERP_HOSTNAME}/server/config/nginx.conf /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf"
         su -c "sed -i 's/# server_names_hash_bucket_size 64;/server_names_hash_bucket_size 64;/g' /etc/nginx/nginx.conf"
         }
+    wsgi_config_file
+    tmp_conf
+    uwsgi_ini
+    nginx_conf
     }
     function www_chown_takeover () {
         chown -R www-data:www-data /srv/openerp/${ERP_HOSTNAME}
@@ -227,6 +200,22 @@ su -c "source /root/.bashrc"
         echo -e -n " | oe-restartwebservers - Restarts Uwsgi and Nginx Web Servers"
         echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
     }
+    add_pg_repo
+    pull_updates
+    install_libs_pgsql
+    install_wkhtmltopdf
+    www_config
+    erp_user_setup
+    erp_db_setup
+    erp_trunk_bazaar_checkout
+    erp_virtual_env_setup
+    erp_py_develop
+    erp_config_stuff
+    www_chown_takeover
+    erp_init_run
+    create_aliases
+    display_final
 }
 
+start_point
 ## END SCRIPT
