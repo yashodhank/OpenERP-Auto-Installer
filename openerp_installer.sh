@@ -3,7 +3,7 @@
 ##################################################################################
 #  Program: ./openerp_install.sh (first do chmod +x openerp_install.sh)
 #  Author : Yashodhan S Kulkarni [ Securiace Technologies - www.securiace.com ]
-#  Build  : 0.0.8
+#  Build  : 0.1.2
 ##################################################################################
 
 export ERP_HOSTNAME="erp.sri-marks.com"
@@ -42,11 +42,9 @@ function start_point() {
         su - postgres -c "createuser ${ERP_DB_USER} -P" && su - postgres -c "createdb ${ERP_DB_NAME} -O ${ERP_DB_USER}"
     }
     function erp_trunk_bazaar_checkout () {
-        #sudo su - ${ERP_SYS_USER} -s /bin/bash
-        su - ${ERP_SYS_USER} -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web && bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server && bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons && bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra && bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
+        su - ${ERP_SYS_USER} -s /bin/bash -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web && bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server && bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons && bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra && bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
     }
     function erp_virtual_env_setup () {
-        #cd /srv/openerp/${ERP_HOSTNAME}/
 cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
 Babel
 Cython
@@ -63,8 +61,8 @@ lxml
 EOF
 
     su -c "virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env"
-    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -e pypdf"
-    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
+    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -e gdata Cython pypdf lxml -- upgrade"
+    #su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
     
     }
     function erp_py_develop () {
@@ -160,7 +158,7 @@ EOF
         chown -R www-data:www-data /srv/openerp/${ERP_HOSTNAME}
     }
     function erp_init_run () {
-        su - www-data -c "/srv/openerp/${ERP_HOSTNAME}/server/openerp-${OPENERP_SERVER_TYPE} -c /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf -d ${ERP_DB_NAME}db -u all --stop-after-init"
+        su - www-data -s /bin/bash -c "/srv/openerp/${ERP_HOSTNAME}/server/openerp-${OPENERP_SERVER_TYPE} -c /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf -d ${ERP_DB_NAME}db -u all --stop-after-init"
         #/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python
     }
     function create_aliases () {
@@ -176,28 +174,25 @@ su -c "source /root/.bashrc"
     }
     function display_final () {
         echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
-        echo -e -n " | uwsgi.ini file location: /etc/uwsgi/apps-enabled/${ERP_HOSTNAME}.ini "
-        echo -e -n " | nginx.conf file location: /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf "
-        echo -e -n " | tmp.conf file location: /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf "
-        echo -e -n " | wsgi.py file location: /srv/openerp/${ERP_HOSTNAME}/server/wsgi.py "
-        echo -e -n " | Addons files location: /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/ "
-        echo -e -n " |  "
-        echo -e -n " |  "
-        echo -e -n " | Database Details: "
-        echo -e -n " | Database Server: localhost "
-        echo -e -n " | Database Name: ${ERP_DB_NAME} "
-        echo -e -n " | Database User: ${ERP_DB_USER} "
-        echo -e -n " | Database Pass: ${ERP_DB_PASS} "
-        echo -e -n " |  "
-        echo -e -n " |  "
-        echo -e -n " | ERP Access URL: http://${ERP_HOSTNAME} "
-        echo -e -n " |  "
-        echo -e -n " |  "
-        echo -e -n " | Additonal Commands: "
-        echo -e -n " | oe-updatecore - Updates OpenERP Web, Server, Addons modules using bazaar/bzr tool"
-        echo -e -n " | oe-symlinkfix - Corrects Soft Links for OpenERP Addons directories"
-        echo -e -n " | oe-wwwfix - Corrects Directory ownership of OpenERP instance to www-data system user"
-        echo -e -n " | oe-restartwebservers - Restarts Uwsgi and Nginx Web Servers"
+        echo -e -n " | uwsgi.ini file location: /etc/uwsgi/apps-enabled/${ERP_HOSTNAME}.ini \n"
+        echo -e -n " | nginx.conf file location: /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf \n"
+        echo -e -n " | tmp.conf file location: /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf \n"
+        echo -e -n " | wsgi.py file location: /srv/openerp/${ERP_HOSTNAME}/server/wsgi.py \n"
+        echo -e -n " | Addons files location: /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/ \n"
+        echo -e -n " |  \n \n"
+        echo -e -n " | Database Details: \n"
+        echo -e -n " | Database Server: localhost \n"
+        echo -e -n " | Database Name: ${ERP_DB_NAME} \n"
+        echo -e -n " | Database User: ${ERP_DB_USER} \n"
+        echo -e -n " | Database Pass: ${ERP_DB_PASS} \n"
+        echo -e -n " |  \n \n"
+        echo -e -n " | ERP Access URL: http://${ERP_HOSTNAME} \n"
+        echo -e -n " |  \n \n"
+        echo -e -n " | Additonal Commands: \n"
+        echo -e -n " | oe-updatecore - Updates OpenERP Web, Server, Addons modules using bazaar/bzr tool \n"
+        echo -e -n " | oe-symlinkfix - Corrects Soft Links for OpenERP Addons directories \n"
+        echo -e -n " | oe-wwwfix - Corrects Directory ownership of OpenERP instance to www-data system user \n"
+        echo -e -n " | oe-restartwebservers - Restarts Uwsgi and Nginx Web Servers \n"
         echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
     }
     add_pg_repo
