@@ -3,15 +3,28 @@
 ##################################################################################
 #  Program: ./openerp_install.sh (first do chmod +x openerp_install.sh)
 #  Author : Yashodhan S Kulkarni [ Securiace Technologies - www.securiace.com ]
-#  Build  : 0.1.2
+#  Build  : 0.1.5
 ##################################################################################
 
-export ERP_HOSTNAME="erp.sri-marks.com"
-export ERP_SYS_USER="test"
-export ERP_DB_NAME="testdb"
-export ERP_DB_USER="test"
-export ERP_DB_PASS="test"
-export OPENERP_SERVER_TYPE="server"
+read -e -p "\n\nEnter FQDN: " ERP_HOSTNAME
+read -e -p "\nEnter System Website User: " ERP_SYS_USER
+read -e -p "\nEnter PostgreSQL Database Name: " ERP_DB_NAME
+read -e -p "\nEnter PostgreSQL Database Username: " ERP_DB_USER
+read -e -p "\nEnter PostgreSQL Database Password: " ERP_DB_PASS
+read -e -p "\nEnter OpenERP Type (server OR gevent): " OPENERP_SERVER_TYPE
+export ERP_HOSTNAME
+export ERP_SYS_USER
+export ERP_DB_NAME
+export ERP_DB_USER
+export ERP_DB_PASS
+export OPENERP_SERVER_TYPE
+
+#export ERP_HOSTNAME="erp.sri-marks.com"
+#export ERP_SYS_USER="test"
+#export ERP_DB_NAME="testdb"
+#export ERP_DB_USER="test"
+#export ERP_DB_PASS="test"
+#export OPENERP_SERVER_TYPE="server"
 
 function start_point() {
     function add_pg_repo () {
@@ -45,20 +58,20 @@ function start_point() {
         su - ${ERP_SYS_USER} -s /bin/bash -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web && bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server && bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons && bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra && bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
     }
     function erp_virtual_env_setup () {
-cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
-Babel
-Cython
-Jinja2
-Mako
-MarkupSafe
-Pillow
-PyYAML
-docutils
-feedparser
-gdata
-gevent
-lxml
-EOF
+#cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
+#Babel
+#Cython
+#Jinja2
+#Mako
+#MarkupSafe
+#Pillow
+#PyYAML
+#docutils
+#feedparser
+#gdata
+#gevent
+#lxml
+#EOF
 
     su -c "virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env"
     su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -e gdata Cython pypdf lxml -- upgrade"
@@ -71,7 +84,7 @@ EOF
         su -c "ln -s /srv/openerp/${ERP_HOSTNAME}/addons/* /srv/openerp/${ERP_HOSTNAME}/server/openerp/addons/"
     }
     function erp_config_stuff () {
-        mkdir -p /srv/openerp/${ERP_HOSTNAME}/server/config
+        su -c "mkdir -p /srv/openerp/${ERP_HOSTNAME}/server/config"
         function wsgi_config_file () {
             cat > /srv/openerp/${ERP_HOSTNAME}/server/wsgi.py << EOF
 import openerp
@@ -216,4 +229,11 @@ su -c "source /root/.bashrc"
 }
 
 start_point
+
+unset ERP_HOSTNAME
+unset ERP_SYS_USER
+unset ERP_DB_NAME
+unset ERP_DB_USER
+unset ERP_DB_PASS
+unset OPENERP_SERVER_TYPE
 ## END SCRIPT
