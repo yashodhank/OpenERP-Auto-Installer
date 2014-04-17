@@ -3,15 +3,21 @@
 ##################################################################################
 #  Program: ./openerp_install.sh (first do chmod +x openerp_install.sh)
 #  Author : Yashodhan S Kulkarni [ Securiace Technologies - www.securiace.com ]
-#  Build  : 0.1.5
+#  Build  : 0.2.0
 ##################################################################################
-
-read -e -p "\n\nEnter FQDN: " ERP_HOSTNAME
-read -e -p "\nEnter System Website User: " ERP_SYS_USER
-read -e -p "\nEnter PostgreSQL Database Name: " ERP_DB_NAME
-read -e -p "\nEnter PostgreSQL Database Username: " ERP_DB_USER
-read -e -p "\nEnter PostgreSQL Database Password: " ERP_DB_PASS
-read -e -p "\nEnter OpenERP Type (server OR gevent): " OPENERP_SERVER_TYPE
+echo -e -n "\n \n ------------------------------------------------------------------------------- \n"
+read -e -p "  Enter FQDN: " ERP_HOSTNAME
+        echo -e -n " |  \n"
+read -e -p "  Enter System Website User: " ERP_SYS_USER
+        echo -e -n " |  \n"
+read -e -p "  Enter PostgreSQL Database Name: " ERP_DB_NAME
+        echo -e -n " |  \n"
+read -e -p "  Enter PostgreSQL Database Username: " ERP_DB_USER
+        echo -e -n " |  \n"
+read -e -p "  Enter PostgreSQL Database Password: " ERP_DB_PASS
+        echo -e -n " |  \n"
+read -e -p "  Enter OpenERP Type (server OR gevent): " OPENERP_SERVER_TYPE
+echo -e -n "\n ------------------------------------------------------------------------------- \n \n"
 export ERP_HOSTNAME
 export ERP_SYS_USER
 export ERP_DB_NAME
@@ -52,31 +58,31 @@ function start_point() {
         su -c 'echo "www-data ALL=NOPASSWD: ALL" >> /etc/sudoers'
     }
     function erp_db_setup () {
+        echo -e -n "\n \n  Enter Password for Database: ${ERP_DB_NAME} and it's User: ${ERP_DB_USER} \n \n"
         su - postgres -c "createuser ${ERP_DB_USER} -P" && su - postgres -c "createdb ${ERP_DB_NAME} -O ${ERP_DB_USER}"
     }
     function erp_trunk_bazaar_checkout () {
         su - ${ERP_SYS_USER} -s /bin/bash -c "bzr co lp:openerp-web --lightweight /srv/openerp/${ERP_HOSTNAME}/web && bzr co lp:openobject-server --lightweight /srv/openerp/${ERP_HOSTNAME}/server && bzr co lp:openobject-addons --lightweight /srv/openerp/${ERP_HOSTNAME}/addons && bzr co lp:openobject-addons/extra-trunk --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-extra && bzr co lp:~openerp-community/openobject-addons/trunk-addons-community --lightweight /srv/openerp/${ERP_HOSTNAME}/addons-community"
     }
     function erp_virtual_env_setup () {
-#cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
-#Babel
-#Cython
-#Jinja2
-#Mako
-#MarkupSafe
-#Pillow
-#PyYAML
-#docutils
-#feedparser
-#gdata
-#gevent
-#lxml
-#EOF
+cat > /srv/openerp/${ERP_HOSTNAME}/requirements.txt << EOF
+Babel
+Cython
+Jinja2
+Mako
+MarkupSafe
+Pillow
+PyYAML
+docutils
+feedparser
+gdata
+gevent
+lxml
+EOF
 
     su -c "virtualenv --no-site-packages /srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env"
-    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -e gdata Cython pypdf lxml -- upgrade"
-    #su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
-    
+    #su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -e gdata Cython pypdf lxml gevent PyYAML --upgrade"
+    su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/pip install -r /srv/openerp/${ERP_HOSTNAME}/requirements.txt --upgrade --force"
     }
     function erp_py_develop () {
         su -c "/srv/openerp/${ERP_HOSTNAME}/${ERP_SYS_USER}env/bin/python /srv/openerp/${ERP_HOSTNAME}/server/setup.py develop"
@@ -88,7 +94,7 @@ function start_point() {
         function wsgi_config_file () {
             cat > /srv/openerp/${ERP_HOSTNAME}/server/wsgi.py << EOF
 import openerp
-openerp.multi_process = True # Nah!                                                     
+openerp.multi_process = True # Nah!
 openerp.conf.server_wide_modules = ['web']
 
 conf = openerp.tools.config
@@ -186,7 +192,7 @@ EOL
 su -c "source /root/.bashrc"
     }
     function display_final () {
-        echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
+        echo -e -n "\n \n -------------------------------------------------------------------------------"
         echo -e -n " | uwsgi.ini file location: /etc/uwsgi/apps-enabled/${ERP_HOSTNAME}.ini \n"
         echo -e -n " | nginx.conf file location: /etc/nginx/sites-enabled/${ERP_HOSTNAME}.conf \n"
         echo -e -n " | tmp.conf file location: /srv/openerp/${ERP_HOSTNAME}/server/tmp.conf \n"
@@ -209,7 +215,7 @@ su -c "source /root/.bashrc"
         echo -e -n " | oe-symlinkfix - Corrects Soft Links for OpenERP Addons directories \n"
         echo -e -n " | oe-wwwfix - Corrects Directory ownership of OpenERP instance to www-data system user \n"
         echo -e -n " | oe-restartwebservers - Restarts Uwsgi and Nginx Web Servers \n"
-        echo -e -n "\n \n ------------------------------------------------------------------------------- \n \n"
+        echo -e -n "------------------------------------------------------------------------------- \n \n"
     }
     add_pg_repo
     pull_updates
