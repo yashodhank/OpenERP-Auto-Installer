@@ -1,3 +1,4 @@
+** OUTDATED **
 OpenERP-Auto-Installer
 ======================
 
